@@ -1,0 +1,204 @@
+Frequently Asked Questions about c2man
+--------------------------------------
+By Graham Stoney (greyham@research.canon.com.au)
+Last-modified: $Date: 2004-05-03 05:17:49 $
+
+Q. Where can I get an up-to-date already patched copy of c2man?
+
+A. You can usually get the latest version via ftp:
+	ftp /pub/Unix/Util/c2man-2.0.*.tar.gz from dnpap.et.tudelft.nl
+
+   Many thanks to Richard Kooijman <R.Kooijman@et.tudelft.nl> for providing
+   the ftp site, and keeping it up to date.  The very latest version probably
+   won't be available until a short time after each patch is issued, since
+   we're relying on Richard's kindness to apply the patches and keep the tar
+   file up to date manually.
+
+   You can also retrieve the latest version via the author's mail server, by
+   mailing to greyham@research.canon.com.au with a message like:
+
+	Subject: Command
+	@PACK shar
+	@SH maildist - c2man 2.0
+
+   In reply, you can expect on the order of 9 or so mail messages, each around
+   55 K long.  You'll also have the extra hassle of unpacking it.  Detailed
+   instructions on using the mail server can be obtained by mailing to the
+   same with address a message like:
+
+        Subject: Command
+        @SH mailhelp -
+
+   It should also be available in your local comp.sources.misc archive.  The
+   versions in the alt.sources and comp.sources.reviewed archives are
+   obsolete.  One day soon I'll be able to put it up for ftp here directly.
+
+
+Q. How do I remove myself from the c2man discussion list?
+
+A. You should have received instructions on how to do this when you joined the
+   list.  It's always wise to save a copy of the instructions you receive when
+   you join a mailing list, so that you can refer to them in future when you
+   wish to leave.
+
+   To remove yourself from the c2man discussion list, send E-mail to:
+        listserv@research.canon.com.au
+
+   With the message:
+	Subject:
+	unsubscribe c2man
+
+   You should also be able to unsubscribe be running Configure again, and
+   asking it to unsubscribe you when it asks if you wish to subscribe to, or
+   unsubscribe from the mailing list.
+
+   Note that the discussion list and the automatic patch notification/update
+   list are completely independant.
+
+
+Q. How do I remove myself from the c2man automatic patch notification/update
+   list?
+
+A. If you don't wish to receive future notification or mailing of new patches,
+   you need to send a message to the author's personal mail server.  In other
+   words, you send E-mail to:
+	greyham@research.canon.com.au
+
+   With the message:
+	Subject: Command
+	@SH package - c2man
+
+   You can also achieve the same effect by running Configure and asking that
+   future patches not be sent to you.  You may also alter your notification
+   vs update preference via Configure.
+
+
+Q. Can c2man handle C++?  Is anyone working on a version that can?
+
+A. No, it can't handle C++, although there are other tools that do a similar
+   job for C++.  A few people have expressed interest, but I don't know of
+   anyone who is actively working on it.  If you look in the file C++autodoc in
+   the distribution, you'll get all the gory details.  This file is always kept
+   up-to-date with the current state of play.
+
+
+Q. How do I apply the official patches to c2man?
+
+A. You need the patch program, by Larry Wall.  Chances are that it's already
+   installed on your system; if not, you could ask your system administrator
+   about getting it, or search for it using archie if you know how.  Once
+   you've got it, follow the instructions in each of the patch headers.  For
+   example, patch 10 says:
+
+    Fix:    From rn, say "| patch -p -N -d DIR", where DIR is your c2man source
+	    directory.  Outside of rn, say "cd DIR; patch -p -N <thisarticle".
+	    If you don't have the patch program, apply the following by hand,
+	    or get patch (version 2.0, latest patchlevel).
+    
+   In other words, 'cd' to your c2man directory and type:
+	    patch -p -N < patch10
+
+   That should feed the patch into the patch program, which will apply it.  You
+   also need to take care to follow the "After Patching" instructions in each
+   patch, and repeat this procedure for each patch.  In general, you can apply
+   all the patches without having to re-run Configure after every patch set,
+   although you must run Configure after patch30, because it renames a few
+   files.  You can apply patches 10 through 30 without having to run Configure
+   though.  The "After patching" instructions assume that you apply patches as
+   they are issued; you don't generally have to do them multiple times if
+   you're applying a whole group of patch sets.
+
+
+Q. Can c2man document structure fields automatically, like it does for enums?
+
+A. In short, No.
+
+   This is a very logical extension; so much so in fact that I'd say it's
+   absence in the current version is a real deficiency.  I'm not sure if you
+   always want the structure contents listed in the manual page for the
+   functions that use the type though, since some interfaces use "opaque"
+   types, where the structure contents is deliberately hidden from the user;
+   eg: the stdio FILE type.  My thoughts were to generate a separate manual
+   page for each struct or type definition, with perhaps an option to include
+   the info in all the functional manual pages using that type, as now happens
+   with enum types now.
+   
+   Adding struct support to the current grammar should be fairly easy; mainly
+   by copying what it does with enum's; and it would certainly be very
+   worthwhile.  I'd encourage anyone who'd like to see greater functionality in
+   c2man to feel free to add it in, and send me the diffs.
+
+   Sorry, this doesn't work at present.  It's probably the most serious
+   omission from the program; lots of people have asked about this.  At
+   present, I don't know when it's likely to be fixed.  I might suddenly get
+   really keen one day and do it -- otherwise, someone else will have to
+   implement it and send me the diffs.  It shouldn't be too hard, but it's a
+   matter of making it a priority and getting around to actually doing it...
+
+
+Q. Why do my functions using ``FILE *'' get documented with this weird
+   ``struct _iobuf'' type?
+
+A. Unfortunately, many systems use a #define for ``FILE'' in stdio.h to rename
+   it to ``struct _iobuf'', rather than using a typedef.  Since c2man sees the
+   output of the pre-processor, ``FILE'' is long gone before it reads the
+   code, and so the documentation that it generates is misleading.
+
+   Some stdio.h's perform this #define conditionally, so it may be possible to
+   pass certain -D flags to c2man which will cause stdio.h to use a typedef
+   instead, although this will be very system-dependant.
+
+   I don't know of a really good solution to this problem, but I'd be
+   interested to hear if anyone has one.
+
+
+Q. How can I get c2man recognise and document #defines?
+
+A. c2man doesn't recognise #defines at all, but you can rewrite it as an enum.
+   You do need to be able to change the type passed to an enum though, to get
+   c2man to recognise that it's what's being passed.  C is very loose with its
+   enums, so it's still just as flexible as the #define case, and the types
+   look more self-documenting in the code too:
+
+	enum Bits
+	{
+		BIT0 = 1,       /* The first bit */
+		BIT1 = 2,       /* The next bit */
+		BIT2 = 4        /* The last bit */
+	};
+	
+	/* set the bits! */
+	void set_bits( enum Bits bits );
+	
+   Gives you:
+	
+	set_bits(3)         UNIX Programmer's Manual          set_bits(3)
+	
+	NAME
+		set_bits - set the bits!
+	
+	SYNOPSIS
+		#include <set_bits.h>
+	
+		void set_bits(enum Bits bits);
+	
+	PARAMETERS
+		enum Bits bits
+		    Possible values for an enum Bits are as follows:
+		    BIT0  The first bit.
+		    BIT1  The next bit.
+		    BIT2  The last bit.
+	
+	DESCRIPTION
+		Set the bits!.
+
+
+Q. But what if my function returns an errno-like code which can take many
+   values, but I'd like the documentation to list only those that the function
+   in question can actually generate?
+
+A. c2man makes a crude attempt at identifying token/value lists in the RETURNS
+   section from the comment describing the function.  If the first thing on a
+   line in the RETURNS section is a single token followed a ':' or TAB
+   character, c2man interprets it as a token list and attempts to format it
+   accordingly.  Have a look at the file "eg/reterrno.h" for an exmple.

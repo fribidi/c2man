@@ -1,0 +1,10 @@
+This directory contains sources for library routines which some users have
+found to be missing on their machines.
+
+Since some of this code is covered by the GNU General Public License, a copy
+is included in the file COPYING.  Note that only those files in the c2man
+distribution which explicitly state that they fall under the terms of this
+license actually do so.
+
+The getopt routines (needed for MSC on the PC, and for VMS) are adapted from
+the GNU versions.

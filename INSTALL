@@ -1,0 +1,74 @@
+INSTALLING c2man:
+
+1. For OS/2 and MSDOS, see the README.pc file in the pc directory.
+
+   For all flavours of Unix, run Configure and answer the questions.
+   Most of the time the default answers should do the trick, but here's some
+   tips; If you're using...
+
+ANSI-C:	Don't put the compiler in strict ISO/ANSI mode, since c2man uses a few
+	UNIX-isms that may disappear from your header files if you do that
+	(eg: popen). Don't use -ansi on gcc for example.
+
+gcc:	Do yourself a favour and use the latest version of gcc (>= 2.3.3).
+	If you use -Wall, also use -Wno-implicit if your system header files
+	don't declare basic stuff like fprintf in stdio.h (SunOS Release 4.1.2
+	for example!).
+
+bison:	If you get link errors reporting `alloca' as undefined, try specifying
+	-lPW when Configure asks `Any additional libraries?'.
+
+flex:	You may need to specify -lfl when asked `Any additional libraries?'.
+	Flex versions 2.3 and older will cause c2man to hang if it encounters
+	an 8 bit character in the input file.  If you require 8-bit character
+	support, use the flex flag '-8' (this is the default for flex 2.4).
+
+Sun:	Sun yacc outputs old prototypes for malloc and free (says they return
+	char * instead of void *), which conflict with the correct ones flex 2.3
+	generates if you use gcc. To make matters worse, gcc 2.2 errors on the
+	old prototypes even if you don't use flex. Use bison instead, or just
+	delete the incorrect prototypes on the first line of y.tab.c when the
+	make errors. If you use gcc 2.2, just upgrade your gcc.
+
+HPUX:	When using cc, don't specify -Aa.  Adding -D_HPUX_SOURCE may help too.
+	If you use the optional c89 compiler instead of standard cc, specify
+	-D_INCLUDE_POSIX_SOURCE -D_INCLUDE_XOPEN_SOURCE as your compiler flags.
+
+dbmalloc:
+	Specify a compiler flag of -DDBMALLOC (and optimization -g if you like)
+	and a library of -ldbmalloc for maximum checking. Don't use dbmalloc
+	with gcc and flex, or y.tab.c will fail to build; just use lex instead.
+	Don't use the shared version of your C library (eg: -lc_s), as
+	Configure will by default, lest you get multiply defined symbols.
+
+Interactive Unix 2.2:
+	If you use gcc (which requires -posix) ignore the warnings about
+	popen/pclose not being defined - apparently they aren't in POSIX.
+
+NeXT:	In NeXTstep 3.1 and greater, `cc -C -E' is broken; tell Configure to
+	run the preprocessor as `/lib/cpp -C' or `cc -C -E -traditional-cpp'.
+	On NeXTstep 3.2, don't link with -lposix.  It's busted.  Sigh.
+
+Otherwise, If you get any errors or warnings, please report them to me (with
+fixes if possible!). Don't worry too much about warnings from y.tab.c or
+lex.yy.c though, since they're generally at the mercy of your yacc & lex.
+
+2. run make depend, if you didn't do it at the end of Configure.
+
+3. run make
+
+4. format (and read) the manual page in c2man.1.
+   The examples in it are automatically generated, so check that it looks OK.
+
+5. Optionally, run "make test > /dev/null" if you don't want to wade though
+   heaps of output, or "make test | nroff -man | more" if you do. This runs
+   c2man over the examples, and on its own source. The test is assumed to pass
+   if it doesn't error or dump core.
+
+   If the preprocessor you told Configure that c2man is to use is different to
+   the one used to when compiling c2man itself, the test may fail because the
+   definitions in config.h may not match the preprocessor c2man will run
+   during the test and in normal use.
+
+6. As root, do "make install". This will install the c2man binary, the example
+   files and the manual page.

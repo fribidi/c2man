@@ -1,0 +1,906 @@
+.\" $Id: c2man.man,v 1.1 2004-05-03 05:17:49 behdad Exp $
+.de EX          \"Begin example
+.br
+.if \\$1 .ne \\$1
+.if !"\\$2"" \{
+.if n .sp 1
+.if t .sp .5
+\\$2
+\}
+.if n .sp 1
+.if t .sp .5
+.nf
+.cs R 24
+.vs \n(.vu-2p
+.in +.5i
+..
+.de EE		\"End example
+.br
+.vs \n(.vu+2p
+.cs R
+.fi
+.in -.5i
+.if n .sp 1
+.if t .sp .5
+..
+.de CS		\"Begin shell command
+.br
+.if n .sp 1
+.if t .sp .5
+.in +.5i
+%
+.ft B
+..
+.de CE		\"End shell command
+.br
+.ft R
+.in -.5i
+.if n .sp 1
+.if t .sp .5
+..
+.de CD		\"Shell command
+.CS
+\\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
+.CE
+..
+.\"	The IF & IE macros cannot be combined due to flatten.sed
+.de IF		\"Begin Include a source file
+.br
+.if n .sp 1
+.if t .sp .5
+.ne 10
+.nf
+.cs R 24
+.vs \n(.vu-2p
+.RS 0.25in
+..
+.de IE		\"End Include a source file
+.br
+.RE
+.if n .sp 1
+.if t .sp .5
+.vs \n(.vu+2p
+.cs R
+.fi
+..
+.\"	The OF & OE macros cannot be combined due to flatten.sed
+.de OF		\"Begin Include a fixed nroff output file
+.br
+.if n .sp 1
+.if t .sp .5
+.ne 10
+.nf
+.RS 0.25in
+..
+.de OE		\"End Include a fixed nroff output file
+.br
+.RE
+.if n .sp 1
+.if t .sp .5
+.fi
+..
+.de NA          \"Begin name and Email address stuff
+.br
+.if \\$1 .ne \\$1
+.if !"\\$2"" \{
+.if n .sp 1
+.if t .sp .5
+\\$2
+\}
+.if n .sp 1
+.if t .sp .5
+.nf
+.in +.5i
+..
+.de NE		\"End name
+.fi
+.in -.5i
+.if n .sp 1
+.if t .sp .5
+..
+.TH C2MAN 1 "March 2, 1995"
+.BY "CISRA"
+.SH NAME
+c2man \- generate manual pages from C source code
+.SH SYNOPSIS
+.B c2man
+[ 
+.I option \fP...\fI
+] [
+.I file \fP...\fI
+]
+.SH DESCRIPTION
+.B c2man
+reads C source code files in which comments have been strategically placed,
+and outputs manual page(s) documenting each function defined or declared (via
+a prototype), and optionally each variable with global scope.
+Function definitions and declarations may be in the old style or ISO/ANSI style.
+If no
+.I file
+argument is given,
+.B c2man
+takes its input from the standard input.
+.PP
+If a
+.B .h
+file is written as a formal interface description when preparing an
+interface spec,
+.B c2man
+can generate all the manual pages required for the spec at one fell swoop,
+and then keep them up to date automatically as the interface changes.
+.PP
+Since
+.B c2man
+will accept either function definitions or prototypes, it can be used on
+either
+.B .c
+or
+.B .h
+files.
+If the input is a
+.B header
+file, any files specified by
+.B \-i
+options are
+assumed to be prerequisites, and get parsed before the input file.
+(Any file whose extension begins with
+.RB `` h '',
+matched case-insensitively,
+is considered a
+.B header
+file.)
+.PP
+This is potentially a huge win for most programmers that just love documenting
+their functions, and updating the documentation every time it changes.
+Here's an example, named example.h:
+.IF
+.so example.h
+.IE
+.PP
+When:
+.CD c2man example.h
+is run,
+this produces a file named
+.B dowork.3
+which can be processed by man(1) or used as:
+.CD "nroff -man dowork.3"
+to produce:
+.OF
+.ne 34
+.so example.inc
+.OE
+.SS "Output Generation"
+By default, a separate output file is generated for each global identifier
+(i.e. function or variable) documented by c2man.
+.PP
+Much of
+.BR c2man 's
+information is extracted from the comment placed immediately before the
+declaration/definition of the identifier being documented; this comment
+is taken to describe the identifier and
+.B must
+be present, or the identifier will be ignored entirely.
+In the case of a variable declaration/definition, this comment may instead be
+placed after it starting on the same line.
+.PP
+Global variables are not documented, unless the
+.B \-v
+option is used.
+.PP
+Identifiers declared
+.B static
+are ignored by default unless the file is a
+.B header
+file (which is most useful with
+.B inline
+functions) or the
+.B -s
+option is used.
+.PP
+Declarations with the
+.B extern
+keyword are ignored unless they appear in a
+.B header
+file; note that this does not include function definitions.
+.SS "Sections Generated Automatically"
+Each manual page starts with a
+.B NAME
+section, listing the name(s) of the identifier(s) documented, along with a
+terse description.
+By default, this description is the first line or sentence of the
+comment describing the identifier.
+With the
+.B \-g
+option, it is found after the first dash
+.RB ( \- )
+in the first comment of the file, and the
+.B \-G
+option specifies it explicitly.
+.PP
+The
+.B SYNOPSIS
+section
+begins with an
+.B #include
+line
+if the source file is a
+.BR header .
+After this is an external declaration for the
+identifier(s) being documented.
+.PP
+Information in the
+.B PARAMETERS
+section is gleaned from the comments immediately before or after each
+parameter declaration. A comment after a parameter can follow the comma that
+separates that parameter from the next, if the comment starts on the same line
+and is the only remaining thing on that line. Leading underscores in a
+parameter name are stripped when printed in the manual page.
+.PP
+If the manual page is for a group of functions (ie:
+.B \-g
+or
+.B \-G
+options),
+identical parameters (in both name and type) common to more than one function
+are described only once if only one has a comment (as in the ctype Xexample below).
+.PP
+If a parameter is an
+.B enumerated
+.BR type ,
+all the possible values it can take are output, along with their descriptions.
+These descriptions are gleaned from the comments surrounding the
+.B enum
+identifiers where the type was defined.
+Comments describing
+.B enum
+identifiers are placed in a similar manner to those that describe function
+parameters.
+.B enum
+identifiers that begin with an underscore are ignored, which is useful for
+padding or
+.I _NUMBER_OF_...
+values which aren't normally used by someone calling
+the function.
+If none of the identifiers in an enumerated type has a comment,
+.B c2man
+will bunch them together to save space.
+.PP
+The
+.B DESCRIPTION
+section contains everything
+after the first line or sentence
+of the comment describing the identifier,
+up until the word
+.RB `` returns ''
+at the start of a line, matched case-insensitively and optionally followed by
+a colon
+.RB ( : ).
+In the case of a variable of
+.B enumerated
+.BR type ,
+it will also list all the values it can hold.
+.PP
+The
+.B RETURNS
+section contains anything after that. Any of these lines that begin with a
+single word followed by a colon or a tab generate tagged paragraphs so that
+lists of possible return values and error codes look neat.
+If the function is void, don't put anything like "Returns: nothing" in
+the comment, since it's a waste of space. If the identifier is a function
+returning an
+.B enumerated
+.BR type ,
+its possible values will be listed here.
+.PP
+The
+.B RETURNS
+section is also added if there is a comment after the function return type.
+.EX 5 "For example:"
+/* Sample function */
+char *			/* NULL if failed string otherwise */
+sample_function()
+{
+}
+.EE
+The
+.B RETURNS
+section will contain the full contents of the comment (stripping the optional
+leading asterisk). It is not possible to use both methods to specify a
+description for the return value. In that case the comment after the
+return type supersedes whatever was specified for the return value in
+the comment above the function.
+.PP
+Finally, a
+.B "SEE ALSO"
+section is generated, referencing all the other manual pages generated, if any.
+.PP
+The
+.BR RETURNS ,
+.B PARAMETERS
+and
+.B "SEE ALSO"
+sections are omitted entirely if they aren't needed.
+.SS "Comment Style and Placement"
+Both
+.B C
+and
+.B C++
+style comments are recognized,
+with seperate consecutive single-line comments coalesced into a single block.
+When looking at comments,
+.B c2man
+ignores everything before the first alpha-numeric character. After that, it
+ignores leading white-space, leading asterisks and leading slashes
+on all subsequent
+lines, and ignores all trailing lines thus rendered blank. If that leaves
+nothing, the comment is ignored entirely.
+This makes it very flexible in supporting popular comment boxing.
+.PP
+Comments can be placed with considerable flexibility so that most commenting
+styles are supported.
+.EX 13 "The following variations of the enum definition in the \fBdowork.h\fR\
+ example are all equivalent:"
+/* commas after the comments. */
+enum Place
+{
+    HOME       /* Home, Sweet Home */,
+    WORK       /* where I spend lots of time */,
+    MOVIES     /* Saturday nights mainly */,
+    CITY       /* New York, New York */,
+    COUNTRY    /* Bob's Country Bunker */
+};
+.EE
+.EX 16
+/* the comment needn't go on the same line,
+ * if the comma goes after the comment.
+ */
+enum Place
+{
+    HOME
+    	/* Home, Sweet Home */,
+    WORK
+    	/* where I spend lots of time */,
+    MOVIES
+    	/* Saturday nights mainly */,
+    CITY
+    	/* New York, New York */,
+    COUNTRY
+    	/* Bob's Country Bunker */
+};
+.EE
+.EX 14
+/* the comment can go before it too. */
+enum Place
+{
+    /* Home, Sweet Home */
+    HOME,
+    /* where I spend lots of time */
+    WORK,
+    /* Saturday nights mainly */
+    MOVIES,
+    /* New York, New York */
+    CITY,
+    /* Bob's Country Bunker */
+    COUNTRY
+};
+.EE
+But the following example is
+.B NOT
+equivalent because the commas are between the identifier and the its
+associated comment, and the comment is on a different line.
+Each comment actually applies to the wrong identifier, so this will result in
+very misleading output.
+.EX 16 "Don't do this:"
+enum Place
+{
+    HOME,
+    	/* Home, Sweet Home */
+    WORK,
+    	/* where I spend lots of time */
+    MOVIES,
+    	/* Saturday nights mainly */
+    CITY,
+    	/* New York, New York */
+    COUNTRY
+    	/* Bob's Country Bunker */
+};
+.EE
+.PP
+Since enum identifiers sometimes fall into logical groups, a comment before
+such an identifier will be taken to apply to the next few in the list,
+provided that the comments describing each individual identifier
+are placed after them. Also, there must be a blank line separating the comment
+describing the next logical group and the comment at the end of the previous
+line, or the two will be coalesced and incorrectly treated as a single comment
+for the previous enumerator.
+.EX 17 "In other words, you can go:"
+/* include logical grouping comments. */
+enum Place
+{
+    /* These take up most of the week */
+    HOME,      /* Home, Sweet Home */
+    WORK,      /* where I spend lots of time */
+
+    /* More for special occasions */
+    MOVIES,     /* Saturday nights mainly */
+    CITY,      /* New York, New York */
+
+    /* The real favourite */
+    COUNTRY    /* Bob's Country Bunker */
+};
+.EE
+.PP
+That may all sound a bit complex, but the upshot is that
+.B c2man
+will usually know which identifier a comment is associated with, unless you do
+something truly bizarre.
+.SS "Processing of Comment Contents"
+Basic punctuation and capitalisation corrections are made in each section for
+neatness, and the typesetting program used to process the output will generally
+reformat line breaks according to the width of the output device. Blank lines
+in a comment will be preserved, and lines starting with a dash
+.RB ( \- ),
+an asterisk
+.RB ( * ),
+or a numbered point 
+.RB ( (n) ,
+.B n)
+.RB or\  n. ), 
+will cause a line break, allowing simple bulleted or numbered lists.
+.PP
+Typesetter specific commands may be included for more complex processing,
+although this isn't recommended since it ties you to a particular typesetter.
+.SS "Grouped Manual Pages"
+Simple, closely related objects can be grouped together onto a single page with the
+.B \-g
+or
+.B \-G
+options. By default, this results in a single output file with multiple links
+so that it can be accessed by the name of the input file, or of any identifier
+documented.
+For example, if ctype.h contains:
+.IF
+.so ctype_ex.h
+.IE
+.PP
+then using:
+.CD c2man -g ctype.h
+yields:
+.OF
+.so ctype_ex.inc
+.OE
+.SS "Extra Sections"
+Additional sections not otherwise recognized by
+.B c2man
+can be included in the manual page by including them in the comment
+describing the identifier.
+A section heading is preceded in the comment by an empty line (after
+removal of leading asterisks), and is the only word on it's line, or is
+a word followed by a colon
+.RB ( : ),
+or is a line ending with a colon, so section names with spaces are allowed,
+like "Return value:".
+.P
+Section heading names are capitalized, and the names
+.BR DESCRIPTION ,
+.B RETURNS
+and
+.B NAME
+are recognized specially so you can name them explicitly if you like.
+.BR FUNCTION ,
+.B PROCEDURE
+and
+.B ROUTINE
+are also recognised, and treated identically to
+.BR NAME .
+.EX 9 "For example:"
+/*
+ * Have a quick puff.
+ * 
+ * Warning: Smoking causes lung cancer
+ */
+void go_for_a_smoke();
+.EE
+Generates a manual page with a
+.B WARNING
+section.
+.EE
+.SH OPTIONS
+.TP
+.BI \-o dir
+Write generated files into directory
+.B dir
+rather than the current directory.
+If
+.B dir
+is specified as
+.BR \- ,
+generated pages are written to the standard output, separated by form-feeds.
+.TP
+.B \-v
+Also output declarations for variables defined in the file.
+.TP
+.B \-s
+Output manual pages for all
+.B static
+identifiers.
+.TP
+.B \-g
+Group all the info generated together into a single
+page (ala ctype(3)), reading the single-line terse description for the
+.B NAME
+section from the line of the first comment in the file.
+If this first line contains a dash
+.RB ( \- )
+surrounded by whitespace, the terse description is taken starting after the
+dash.
+If multiple files are specified,
+the first such suitable comment encountered is used. A link to
+the output file is made for each identifier documented, according to the
+.B \-l
+option.
+.TP
+.BI \-G terse
+Like
+.BR \-g ,
+but using the specified terse description rather than reading it from the
+file.
+.TP
+.B \-k
+Don't attempt to fix up capitalization and punctuation.
+.TP
+.B \-b
+If a function lacks a preceding comment, look for one immediately following
+the curly-brace at the top of the function body.  
+The comment must appear before anything else.
+.TP
+.B \-B
+Apply 
+.B \-b 
+strictly.  Only look for the description of a function at
+the top of its body.
+.TP
+.B \-l h|s|f|n|r
+Select how the output for a grouped manual page is linked to files named after
+all identifiers documented on the page.
+Hard link
+.RB ( h )
+is the default, as it uses the least space.
+Soft link
+.RB ( s ),
+where supported, allows a
+.BR find (1)
+command with
+.RB `` "\-type f" ''
+to easily skip the duplicated pages.
+Separate file
+.RB ( f )
+containing a file include
+directive is the traditional
+.SM UNIX
+method.
+No link
+.RB ( n )
+is useful for generating printed documentation without duplicated pages; only
+a single file, named according to the
+.B \-n
+option, is generated.
+Remove
+.RB ( r )
+is like No link, but also removes any previously generated links/files named
+after the identifiers documented. Useful for cleaning up after accidents with
+the other link options.
+.sp
+In all cases, any existing links will be removed before being rewritten.
+.TP
+.B \-n
+Name the documentation output file after the input file.
+When generating grouped manual pages, this will be the file to which others
+are linked. 
+For non-grouped manual pages, if documentation for more than one
+identifier is generated, information about the last identifier will overwrite
+information about all the previous ones.
+.PP
+.BI \-i file
+.PP
+\fB\-i\fI\{"file"\}
+.TP
+.BI \-i <file>
+Insert a
+.B #include
+line referencing the specified file in the
+.B SYNOPSIS
+section, using the ``<file>'' form by default.
+Any number of
+.B \-i
+options may be specified to build up a list of prerequisites.
+If using the second form, you may need to quote the quotation marks, lest they
+get removed by the shell.
+.TP
+.BI \-x sectionname
+Exclude
+.I sectionname
+from the generated manpages.  This option may be repeated to exclude a number
+of sections.
+.TP
+.BI \-H header-path
+Prepend
+.B header-path
+to the name of the
+.B header
+file when an
+.B #include
+line is automatically generated in the
+.B SYNOPSIS
+section.
+.TP
+.BI \-L
+Lazy option: Only list parameters in the
+.B PARAMETERS
+section if they are documented by a comment in the source. By default,
+parameters with no comment are described as ``Not Documented.'', to encourage
+the programmer to comment them.
+.TP
+.BI \-Tn|l|t|h|a[, options ]
+Set the output typesetting language as well as language specific
+options.
+.I options
+is a comma delimited list of options.
+.B Nroff
+.RB ( n )
+is the default, 
+.B LaTeX
+.RB ( l )
+,
+.B Texinfo
+.RB ( t )
+,
+.B HTML
+.RB ( h )
+, or
+.B AutoDoc
+.RB ( a ).
+.B Texinfo
+specific options are 
+.BR s ,
+.BR t ,
+.BR n ,
+and
+.BR C .
+
+In 
+.B Texinfo
+mode, each section is normally coded as a ``heading'' rather than a
+``section''.  This prevents the section name from appearing in the
+table of contents.  If the option
+.B t
+is given, the name of the manpage is used for the title of the
+.B NAME
+section, and is encoded as a ``section'', placing it in
+the table of contents.  Subsequent sections are encoded as ``headings''.  
+.B Texinfo
+supports multiple levels of headings; the desired level may be
+specified via the 
+.BI s n
+option, where
+.I n
+starts at 0 for the ``chapter level'' and works down.  A
+top level node is created for the manpage, except when in embedded
+mode
+(the 
+.B c2man \-e
+option).  If the 
+.B n
+option is specified, a node is created in embedded mode, but
+without Up, Previous, or Next pointers;  these must be filled in
+.BR ( Texinfo
+mode in 
+.B emacs
+does a good job of it).  The
+.B C
+option capitalizes the section titles.  Usually they are printed
+as specified (which is usually upper case).
+.TP
+.BI \-e
+Prepares the output so it can be embedded in texts of the output typesetting
+language.
+.TP
+.BI \-M name
+Set the name of the manual in which the page will go.
+.TP
+.BI \-S section
+Set the default manual section, used as the extension on the output files.
+.I section
+defaults to ``3'' for
+.BR nroff ,
+``texi'' for
+.B Texinfo ,
+``html'' for
+.B HTML
+and ``tex'' for
+.B LaTeX
+output, as specified via the
+.B \-T
+option.
+This setting can be overridden by the
+.BI \-O? .ext
+options for finer control.
+.TP
+.BI \-Of|v|F|V[ subdir ][. ext ]
+Provides for finer control of the output files, allowing a different output
+subdirectory and extension to be specified for these different classes of
+objects:
+functions
+.RB ( f ),
+variables
+.RB ( v ),
+static functions
+.RB ( F )
+and static variables
+.RB ( V ).
+.sp
+If
+.I subdir
+is specified, the selected class of output will be written in that
+subdirectory under the directory given by the
+.B \-o
+option if specified, otherwise under the current directory.
+.sp
+If
+.I .ext
+is specified, it will be used as the extension on the output files of the
+selected class, instead of the default based on the
+.B \-S
+option (if specified), or the typesetting output format specified by the
+.B \-T
+option.
+.sp
+For example, the following command will generate
+.BR nroff (1)
+style output under the /usr/local/man hierarchy, documenting functions in
+section 3 (/usr/local/man/man3/*.3), global variables in section 3v
+(/usr/local/man/man3/*.3v), static functions in section 9
+(/usr/local/man/man9/*.9) and
+static variables in section 9v (/usr/local/man/man9/*.9v):
+.CD c2man -o/usr/local/man -v -s -Ofman3.3 -Ovman3.3v -OFman9.9 -OVman9.9v input.c
+The
+.B \-O
+options will have no effect if
+.B \-o-
+is used to write to standard output, and
+.BR \-Ov ,
+.B \-OF
+and
+.B \-OV
+will have no effect unless their classes of output are enabled via the
+appropriate
+.B \-v
+and
+.B \-s
+options.
+.TP
+.BI \-F template
+Set the format used to output the prototype for functions with more than 1
+parameter
+in each manual page;
+functions with zero or 1 parameters are always output as one line.
+The format is specified by a template in the form
+.EX
+" int f ( a, b )"
+.EE
+but you may replace each space in this string with any number of
+whitespace characters.
+For example, the option
+.EX
+-F"int f(\\n\\ta,\\n\\tb\\n\\t)"
+.EE
+.EX 5 "will produce:"
+int main(
+        int argc,
+        char *argv[]
+        )
+.EE
+.EX 5 "The default output format is:"
+int main
+(
+        int argc,
+        char *argv[]
+);
+.EE
+.TP
+.BI \-P preprocessor
+Run a different C preprocessor than normal (use
+.B \-V
+to determine the configured default).
+You must include any options required to prevent it from stripping comments,
+which is normally the default preprocessor behaviour.
+For example, to use
+.BR gcc 's
+cpp instead:
+.CD c2man -P \{"gcc -E -C"\}
+.TP
+.BI \-D name[=value]
+This option is passed through to the preprocessor and is used to define 
+symbols for use with conditionals such as
+.I #ifdef.
+.TP
+.BI \-U name
+This option is passed through to the preprocessor and is used to remove
+any definitions of this symbol.
+.TP
+.BI \-I directory
+This option is passed through to the preprocessor and is used to specify
+a directory to search for files that are referenced with 
+.I #include.
+.TP
+.B \-V
+Print version information and cpp parameters.
+.SH FILES
+.TP
+$(privlib)/eg/*.[ch]
+A few example input files, showing different commenting styles.
+.SH "SEE ALSO"
+man(1),
+apropos(1),
+catman(8),
+cproto(1),
+cc(1),
+cpp(1)
+.SH DIAGNOSTICS
+.BR c2man 's
+error messages are not very helpful, so make sure your code compiles before
+trying
+.BR c2man .
+If the code compiles OK but
+.B c2man
+rejects it, it may be because a comment is in a position
+.B c2man
+does not accept, or you are using a compiler extension not strictly conforming
+to standard C.
+.B c2man
+defines the preprocessor symbol
+.B __C2MAN__
+with its major version number
+to allow you to work around such problems by surrounding them with
+.BR "#ifndef __C2MAN__" .
+.PP
+An error at the very end of a function may indicate that the comments at the
+beginning are badly placed.
+.SH HISTORY
+.B c2man
+was originally written by:
+.NA 4
+Graham Stoney
+Canon Information Systems Research Australia
+greyham@research.canon.com.au
+(please send bug reports here)
+.NE
+Many thanks are due to the many other Internet contributors since then, and to
+Chin Huang, the author of
+.B cproto
+from which it was originally derived.
+.SH BUGS
+The
+.B \-F
+option only interprets the following
+character escape sequences:
+.EX 2
+\\n	newline
+\\t	tab
+.EE
+.PP
+A comment before a preprocessor directive will be considered to apply
+to the identifier that immediately follows, if it has no
+comment of its own.
+This is because the preprocessor directive gets removed by cpp before
+c2man looks at it.
+.PP
+Comments aren't legal in some of the more obscure places that they are in C.
+.PP
+Heavy use of
+.B #define
+in a program may yield somewhat obscure manual pages.
+.PP
+.BR c2man 's
+output backends may not be entirely consistent, but then users of
+different formatters tend to have different tastes.

@@ -1,0 +1,64 @@
+README		Start here.
+ChangeLog	Log of recent changes.
+INSTALL		How to install it.
+FAQ		Frequently Asked Questions about c2man, with Answers.
+C++autodoc	An article describing how C++ support could be added.
+MANIFEST	This list of all files in the package.
+Configure	Automated installation script.
+c2man.man	Source for the manual pages; needs flattening.
+Makefile.SH	Produces Makefile.
+catalog		Free Compilers Catalog entry for c2man.
+example.h	First example header file for the manual page.
+ctype_ex.h	Second example header file for the manual page.
+flatten.SH	Produces sed script to flatten c2man.1 for installation.
+fixexamp.in	Commented sed script to format man page examples.
+lex.l		Lexical analyser.
+grammar.y	Parser.
+config_h.SH	Produces config.h, the portability header.
+patchlevel.h	The current patch level.
+confmagic.h	Further portability magic brought to you by metaconfig.
+c2man.h		Source code...
+semantic.h
+symbol.h
+strconcat.h
+manpage.h
+enum.h
+c2man.c
+semantic.c
+string.c
+symbol.c
+strconcat.c
+manpage.c
+enum.c
+strappend.c 
+strappend.h
+output.h	Format-independant interface to backends.
+nroff.c		Backend for nroff output.
+texinfo.c	Backend for texinfo output.
+latex.c		Backend for LaTeX output.
+html.c		Backend for HTML output.
+autodoc.c	Backend for AutoDoc output.
+libc/README.libc Info about library routines which may help.
+libc/COPYING	GPL to cover the GNU-derived library routines.
+libc/getopt.c	getopt support for OS/2, MSDOS & VMS.
+libc/getopt.h	...
+libc/getopt1.c	...
+libc/alloca.c	Portable alloca() routine.
+eg/boxcomment.c	Example input files...
+eg/ccomment.h
+eg/commentaft.c
+eg/cppcomment.h
+eg/dash.h
+eg/ellipsis.c
+eg/grouped.c
+eg/multidecl.c
+eg/namedash.h
+eg/oldstyle.c
+eg/returnerr.h
+eg/returnlist.h
+eg/sections.c
+eg/simplesect.c
+eg/surround.c
+eg/underscore.h
+eg/variable.c
+eg/retdecl.c 

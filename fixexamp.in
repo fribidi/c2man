@@ -1,0 +1,60 @@
+# $Id: fixexamp.in,v 1.1 2004-05-03 05:17:49 behdad Exp $
+# Fix up c2man output for inclusion of examples in the c2man manual page.
+# This file gets processed to remove comments because some sed's can't handle
+# them. Can you believe it?.
+
+# The double backslashes in variable interpolations are because sed consumes
+# one, not because we're defining macros here (we aren't).
+
+# special hack: rename ctype_ex to ctype just to make that example neat.
+s/ctype_ex/ctype/
+
+# replace the .TH line with a title line.
+# we only alter the title length just as the title line is output so an example
+# that goes over a page break doesn't damage the real manual page's header.
+# Also, calculate and remember the shortened line length: groff doesn't reset
+# .ll in .SH & .TP macros, so we use an absolute value later rather than
+# relative changes.
+/^\.TH /{
+s/^\.TH "\([^"]*\)" \([^ ]*\) .*/.ds [H \1\\|(\\|\2\\|)/
+a\
+.ds [D UNIX Programmer's Manual\
+.po +1i\
+.lt -1.5i\
+.tl @\\*([H@\\*([D@\\*([H@\
+.lt +1.5i\
+.po -1i\
+.RS +1i\
+.nr CL \\n(.l-0.5i
+}
+
+# surround all the .SH and .SS lines with page offset indents
+# the .ne line will force a page break before the .po is evaluated, in the case
+# where a .SH in an example is at the very bottom of the page. Otherwise the .SH
+# could cause the break, resulting in the wrong .po setting for the new page's
+# title line.
+/^\.S[SH] /{
+i\
+.br\
+.ne 3\
+.RE\
+.po +1i
+a\
+.po -1i\
+.RS +1i\
+.ll \\n(CLu
+}
+
+# handle tagged paragraphs; .TP retains .RS setting, but resets .ll
+# since the parameter to .TP is on the next line, we read the next line in first
+/^.TP/{
+n
+a\
+.ll \\n(CLu
+}
+
+# up the line length again at the end of the example file
+$a\
+.ll \\n(CLu+0.5i\
+.RE
+

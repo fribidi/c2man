@@ -1,0 +1,292 @@
+From greyham Thu Oct 28 18:42:35 1993
+Newsgroups: comp.lang.c++,comp.programming.literate
+Subject: An Automatic C++ documentation compilation project.
+Summary: Anyone willing to add C++ support to c2man?
+Keywords: c2man, C, C++, Literate Programming, Documentation
+
+Copyright 1993, 1994 by Graham Stoney.
+This may be freely redistributed or quoted, so long as it's attributed to me.
+
+Writing and maintaining documentation has often been a thorn in the side of the
+Software Engineer and Programmer. After spending a great deal of time and
+effort writing documentation about a program or software system, the code
+invariably changes, quickly rendering the documentation out of date. The
+documentation becomes misleading, gets neglected, and quickly becomes useless.
+
+"Literate Programming" is one approach to solving this problem. It effectively
+introduces a whole new (typesetting) language, requires a quite radical shift
+on the part of the "non-literate" programmer and still requires a good deal of
+effort on the part of the programmer[1].
+
+I'd like to suggest a different approach which lies considerably closer to
+more traditional programming practices, and can offer quite immediate benefits
+when functional interface documentation is the main documentation required.
+
+The primary philosophy here is to use the programming language as far as
+possible to express the programmer's intentions, and to use comments only when
+the programming language is not sufficiently expressive. A comment can then
+become part of the language grammar which is recognised by a "documentation
+compiler". This tool parses a superset of the programming language and can
+automatically generate documentation in human-readable form by associating the
+programmer's comments with the objects in the code by their context.
+
+Whilst the idea of extracting documentation from comments in source code is by
+no means new, the difference here is that the comments actually form part of
+the grammar of the language recognised by the documentation compiler[2].
+
+Comments should not repeat information that is already represented in the
+program code; for instance, a comment describing a function argument should not
+repeat the name and type of that argument (since that information has already
+been included, for the compiler), but should appear near the argument.
+
+For example, in C, the programmer should write this:
+
+	/* include an example in the article */
+	enum Result example(int page	/* page it appears on */);
+
+Rather than this:
+
+	/* include an example in the article
+	 *
+	 * PARAMETERS:
+	 *	int page	page it appears on
+	 *
+	 * RETURNS:
+	 *	RESULT_YES		The readers agreed
+	 *	RESULT_NO		The readers disagreed
+	 *	RESULT_YOURE_JOKING	The readers disagreed strongly
+	 *	RESULT_BLANK_LOOKS	The readers didn't understand
+	 */
+	enum Result example(int page);
+
+
+Also in this example, the documentation compiler knows the possible enumerated
+values that the function can return (as does the "real" compiler), so it is
+unnecessary for the programmer to restate them. The comments need simply be
+included in the definition for "enum Result" for the "RETURNS" information to
+be generated automatically:
+
+    enum Result {
+	RESULT_YES,		/* The readers agreed */
+	RESULT_NO,		/* The readers disagreed */
+	RESULT_YOURE_JOKING,	/* The readers disagreed strongly */
+	RESULT_BLANK_LOOKS	/* The readers didn't understand */
+    };
+
+Critics have suggested that the latter style in the example is easier to read
+for someone wishing to call the function in question. Of course, this is a
+style question which depends on each person's tastes; but the criticism is tied
+to the notion that the source code needs to look "beautiful" because it is the
+primary reference for someone wishing to use that function. This becomes much
+less significant once documentation is available which is known to _always_ be
+up to date. Of course, the latter style takes longer to write and maintain,
+and can become out of date should the name or type of the parameter be
+changed, yet the comment get neglected.
+
+I have implemented one such documentation compiler for the C language called
+"c2man", which is freely available[3]. The response from users has been
+extremely encouraging; I suspect this is partly because of the wide variety of
+styles of comment placement that are recognised: it often correctly recognises
+comments that weren't written with c2man in mind at all. While it's use is
+focused solely on functional interface documentation and it doesn't have
+anywhere near the power of a full Literate Programming system, the focus is on
+reducing the effort required by the programmer to the absolute minimum, and
+seeing how much documentation we can get essentially "for free".
+
+Many people have requested C++ support be added to c2man, and I suspect that
+this philosophy would be even more suitable and powerful for documenting
+interfaces to C++ classes automatically.
+
+Here is an example of how I envisage this philosophy would work when applied to
+C++. It's interesting to note that this code was written a couple of years ago
+exactly as you see it here, without the idea of generating documentation from
+it in mind at all:
+
+
+    // generic Timer class
+    class Timer
+    {
+    private:
+	static int numactive;	// number of constructed timers.
+	static Timer *first;	// first one in list.
+	Timer *next;		// next one in linked list.
+	Time ticksdiff;		// ticks we take to expire once at front.
+
+	enum
+	{
+		INACTIVE,	// timer is not in chain.
+		STARTED,	// one-shot
+		RUNNING		// continuous.
+	} state;
+
+	// original interrupt vector value.
+	static void interrupt (far *old_vector)(...);
+
+	void (*timeout_function)(int);	// function called when we time out
+	int timeout_parameter;		// gets passed to timeout_function
+	Time duration;			// timer length (ticks)
+
+	static void interrupt far tick(...);	// clock tick routine.
+
+	void insert();	// add into active chain.
+	void remove();	// remove from active chain.
+	void set(Time milliseconds);	// set duration from ms.
+
+    public:
+	// constructor
+	Timer(Time time=0,		// milliseconds
+	      void (*function)(int)=0,	// called at timeout
+	      int param=-1);		// param for function
+
+	// destructor
+	~Timer();
+
+	// start (or restart) a timer running.
+	void Start();
+	void Start(Time duration);	// how long to run for
+
+	// start a timer running continuous.
+	void Run();
+
+	// stop a timer.
+	void Stop();
+
+	// is a timer active?
+	boolean Active() const { return state != INACTIVE; };
+    };
+
+
+Processing this class declaration could generate the following automatically:
+
+    NAME
+	    Timer - generic timer class
+    
+    SYNOPSIS
+	    class Timer
+	    {
+	    public:
+		    Timer(Time time=0,
+			    void (*function)(int)=0,
+			    int param=-1);
+		    ~Timer();
+		    void Start();
+		    void Start(Time duration);
+		    void Run();
+		    void Stop();
+		    boolean Active() const;
+	    };
+    
+    PARAMETERS
+	Time time
+	    Milliseconds
+    
+	void (*function)(int)
+	    called at timeout.
+    
+	int param
+	    Param for function.
+    
+	Time duration
+	    How long to run for.
+    
+    DESCRIPTION
+	Timer
+	    Constructor
+    
+	~Timer
+	    Destructor
+    
+	Start
+	    Start (or restart) a timer running.
+    
+	Run
+	    Start a timer running continuous.
+    
+	Stop
+	    Stop a timer.
+    
+	Active
+	    Is a timer active?.
+
+
+It should also be possible to extract this information from the implementation
+of the class (rather than the declaration), if that's where the user prefers to
+put the comments describing each member function and their parameters.
+
+The ideal tool should:
+1. Avoid imposing a style on the programmer.
+2. Work out section names (NAME, SYNOPSIS etc) without the programmer having
+   to specify them explicitly.
+3. Handle C++ and C style code equally well.
+4. Not require the programmer to restate information which is already expressed
+   in the syntax of the programming language.
+5. Work reasonably well with existing code.
+6. Flatten the class hierarchy so that the documentation for each class
+   includes virtually everything the user needs to know about it.
+
+A number of tools already exist which attempt to tackle this problem, such as
+class2man, genman, classdoc and docclass.  They vary in sophistication,
+utility, and the demands they place on the programmer; however, none as yet
+meet all the criteria set out above, and no one tool will suit the tastes of
+all programmers.
+
+Pouring lots of effort into a really ``smart'' documentation generator makes
+sense because once it's done, you get a payback for every document you
+generate. Every little feature added to the documentation generator to make
+things easier for the programmer pays off multiple times, and minimising the
+effort required by the programmer is the key.
+
+The logical starting point would be to graft Jim Roskind's C++ grammar[4] into
+c2man, modifying it to recognise comments in the relevant places, and adding
+all the necessary structures to hold the information from the parser that will
+get included in the output.  Very little functional change should be needed in
+the lexer, which already recognises C++ comments.
+
+Unfortunately, at present I do not have sufficient spare time to make the
+additions to c2man required to support C++. It would be a great contribution to
+the C++ community, not to mention the documentation time saved by themselves,
+for someone involved in C++ work to add this support and release the result[5].
+
+If you work with a team developing C++ code, please consider having one of your
+developers on a ``Usenet Sabbatical'' to extend this philosophy to C++, and
+start reaping the benefits in documentation time savings.
+
+It could also make an ideal Computer Science student compiler project.
+
+Please contact me via E-mail if you are interested in undertaking such a
+project.
+
+
+Graham Stoney
+greyham@research.canon.com.au
+
+Footnotes:
+1. Advocates of Literate Programming would argue that Literate Programming is
+   much more than snazzy documents and that it encourages this extra effort to
+   focus early on in the design of the software, which pays off later.
+
+2. To get a better idea, see the file grammar.y in the c2man distribution.
+
+3. c2man has been posted to comp.sources.misc. It should be available from:
+location:	ftp from any comp.sources.misc archive, in volume42
+		(the version in the comp.sources.reviewed archive is obsolete)
+		ftp /pub/Unix/Util/c2man-2.0.*.tar.gz from dnpap.et.tudelft.nl
+    Australia:	ftp /usenet/comp.sources.misc/volume42/c2man-2.0/*
+		from archie.au
+    N.America:	ftp /usenet/comp.sources.misc/volume42/c2man-2.0/*
+		from ftp.wustl.edu
+    Europe:	ftp /News/comp.sources.misc/volume42/c2man-2.0/*
+		from ftp.irisa.fr
+    Japan:	ftp /pub/NetNews/comp.sources.misc/volume42/c2man-2.0/*
+		from ftp.iij.ad.jp
+    Patches:	ftp pub/netnews/sources.bugs/volume93/sep/c2man* from lth.se
+
+4. Jim Roskind's yaccable C++ grammar is available via ftp from
+   ics.uci.edu in the ftp/pub directory as:
+
+        c++grammar2.0.tar.Z 
+        byacc1.8.tar.Z
+
+5. c2man's copyright requires that all derivative works remain freely
+   available.
+

@@ -1,0 +1,29 @@
+Wed Apr 24 12:08:09 EST 1996   Graham Stoney <greyham@research.canon.com.au>
+
+. Description:
+
+	-k doesn't take an option, reported by J.Thompson@swansea.ac.uk.
+
+	Add Marco Nijdam to the awards list.
+
+	Handle RETURNS comment next to declarator, from Marco Nijdam.
+	Also add an example of its usage in the eg directory.
+
+	Allow spaces in a section heading, from Marco Nijdam.
+
+	Make #include more flexible, from Steven E. Haehn.
+
+	Handle comments boxed with ---- and =====. 
+
+	Update the README a bit.
+
+	Add ChangeLog file, to track changes.
+
+	Update my E-mail address.
+	The '.oz.au' in my address has now officially changed to '.com.au',
+	although the old address will continue to work indefinitely.
+
+	Fix a couple of minor manual page things.
+
+	Update the Free Compilers Catalog entry.
+
